@@ -1,4 +1,4 @@
-// www.kreativekiste.de // 06.04.2026 // Version 2.13
+// www.kreativekiste.de // 06.04.2026 // Version 2.10
 
 // --- CAD-TRICK: Macht auch leere Rechtecke und Kreise in der Mitte anklickbar! ---
 const editorStyle = document.createElement('style');
@@ -8,10 +8,6 @@ document.head.appendChild(editorStyle);
 const modal = document.getElementById('editor-modal');
 const editorCanvas = document.getElementById('editor-canvas');
 const toolBtns = document.querySelectorAll('.editor-btn');
-
-// Zwingt das SVG auf das korrekte 120x160 Raster und schneidet überstehendes ab
-editorCanvas.setAttribute('viewBox', '0 0 120 160');
-editorCanvas.style.overflow = 'hidden';
 
 let currentTool = 'line';
 let isDrawing = false;
@@ -48,31 +44,18 @@ toolBtns.forEach(btn => {
     });
 });
 
-// --- BOMBENFESTE MAUS-BERECHNUNG ---
 function getMouseCoords(e) {
-    // Der SVG-Matrix-Trick: Rechnet die Bildschirm-Pixel exakt in das SVG-Raster (120x160) um!
-    const pt = editorCanvas.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    
-    const ctm = editorCanvas.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 }; 
-    
-    const cursor = pt.matrixTransform(ctm.inverse());
-    
-    let x = Math.round(cursor.x);
-    let y = Math.round(cursor.y);
-    
-    // Harte Begrenzung auf die Ränder (0-120 in X, 0-160 in Y)
-    x = Math.max(0, Math.min(120, x));
-    y = Math.max(0, Math.min(160, y));
-    
-    return { x, y };
+    const rect = editorCanvas.getBoundingClientRect();
+    return {
+        x: Math.round((e.clientX - rect.left) / (rect.width / 60)),
+        y: Math.round((e.clientY - rect.top) / (rect.height / 100))
+    };
 }
 
 // --- ZEICHNEN & AUSWÄHLEN ---
 editorCanvas.addEventListener('mousedown', (e) => {
     if (currentTool === 'select') {
+        // Solange man nicht den leeren Canvas anklickt, wähle das Element
         if (e.target !== editorCanvas && e.target.tagName.toLowerCase() !== 'svg') {
             selectElement(e.target);
             const coords = getMouseCoords(e);
@@ -132,11 +115,13 @@ document.addEventListener('mousemove', (e) => {
 
     const coords = getMouseCoords(e);
     
+    // 1. Wenn wir ein Bauteil oder Anfasser frei bewegen
     if (activeDragHandle) {
         activeDragHandle(coords.x, coords.y);
         return;
     }
 
+    // 2. Wenn wir gerade live zeichnen
     if (isDrawing && currentElement) {
         if (currentTool === 'line') {
             currentElement.setAttribute('x2', coords.x); currentElement.setAttribute('y2', coords.y);
@@ -256,6 +241,7 @@ function setupElementMove(el, startCoords) {
     } else if (tag === 'circle') {
         initData = { cx: parseFloat(el.getAttribute('cx'))||0, cy: parseFloat(el.getAttribute('cy'))||0 };
     } else {
+        // Fallback für komplexe SVG Pfade (z.B. wenn man existierende Bauteile öffnet)
         const transform = el.getAttribute('transform') || '';
         const match = transform.match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
         initData = { 
@@ -299,12 +285,12 @@ document.getElementById('btn-save-comp').addEventListener('click', () => {
         newDiv.className = 'component-item';
         newDiv.draggable = true;
         newDiv.dataset.type = 'custom';
+        newDiv.innerHTML = `<button class="edit-comp-btn" title="Bauteil bearbeiten">✏️</button><svg viewBox="0 0 60 100" width="60" height="100" class="symbol">${editorCanvas.innerHTML}</svg>`;
         
-        newDiv.innerHTML = `<button class="edit-comp-btn" title="Bauteil bearbeiten">✏️</button><svg viewBox="0 0 120 160" width="120" height="160" class="symbol">${editorCanvas.innerHTML}</svg>`;
-        
+        // --- DER WICHTIGE FIX FÜR DAS DRAG & DROP DES NEUEN BAUTEILS ---
         newDiv.addEventListener('dragstart', (e) => {
             draggedHTML = e.currentTarget.querySelector('svg').outerHTML;
-            draggedType = 'custom'; 
+            draggedType = 'custom'; // <-- Das hat gefehlt!
             e.dataTransfer.setData('text/plain', ''); 
         });
         
