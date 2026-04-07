@@ -1,4 +1,4 @@
-// www.kreativekiste.de // 05.04.2026 // Version 1.4
+// www.kreativekiste.de // 07.04.2026 // Version 1.7
 
 let isDraggingWire = false;
 let draggedWireTarget = null; 
@@ -26,11 +26,37 @@ document.addEventListener('mouseup', () => {
 });
 
 window.addConnection = function(port1, port2, savedData = {}) {
+    // --- NEU: FARB-VERERBUNG ---
+    // Standardfarbe setzen. Wenn wir ein Projekt laden, hat savedData.color Priorität.
+    let inheritedColor = savedData.color || 'black';
+
+    // Wenn wir ein frisches Kabel ziehen (ohne gespeicherte Farbe), prüfen wir,
+    // ob an port1 oder port2 bereits ein anderes Kabel angeschlossen ist.
+    if (!savedData.color) {
+        for (const existingConn of connections) {
+            if (existingConn.port1 === port1 || existingConn.port2 === port1 ||
+                existingConn.port1 === port2 || existingConn.port2 === port2) {
+                // Ein verbundenes Kabel gefunden! Wir übernehmen die Farbe und brechen die Suche ab.
+                inheritedColor = existingConn.color;
+                break; 
+            }
+        }
+    }
+
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke', 'black');
+    path.setAttribute('stroke', inheritedColor);
     path.setAttribute('stroke-width', '2');
     path.setAttribute('fill', 'none'); 
+    path.style.cursor = 'pointer'; 
     wiringLayer.appendChild(path);
+
+    const textElem = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    textElem.setAttribute('font-family', 'Arial');
+    textElem.setAttribute('font-size', '12');
+    textElem.setAttribute('fill', 'black');
+    textElem.setAttribute('text-anchor', 'middle');
+    textElem.style.pointerEvents = 'none'; 
+    wiringLayer.appendChild(textElem);
 
     const h1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     const h2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -43,14 +69,22 @@ window.addConnection = function(port1, port2, savedData = {}) {
 
     const connObj = {
         pathElem: path, port1: port1, port2: port2, h1: h1, h2: h2, h3: h3,
+        textElem: textElem, name: savedData.name || '', color: inheritedColor,
         showHandles: false, customX1: savedData.customX1, customY: savedData.customY, customX2: savedData.customX2
     };
 
     path.addEventListener('dblclick', (e) => {
         e.preventDefault(); e.stopPropagation();
-        connObj.showHandles = !connObj.showHandles;
-        updateCables();
-        addHistory(connObj.showHandles ? 'Kabel-Punkte eingeblendet' : 'Kabel-Punkte ausgeblendet');
+        if (typeof showWireContextMenu === 'function') {
+            showWireContextMenu(e.clientX, e.clientY, connObj);
+        }
+    });
+
+    path.addEventListener('contextmenu', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        if (typeof showWireContextMenu === 'function') {
+            showWireContextMenu(e.clientX, e.clientY, connObj);
+        }
     });
 
     h1.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); isDraggingWire = true; draggedWireTarget = {conn: connObj, type: 'X1'}; });
@@ -90,6 +124,7 @@ function updateCables() {
         if (!document.body.contains(conn.port1) || !document.body.contains(conn.port2)) {
             conn.pathElem.remove();
             conn.h1.remove(); conn.h2.remove(); conn.h3.remove();
+            if(conn.textElem) conn.textElem.remove();
             return false;
         }
         return true;
@@ -123,8 +158,20 @@ function updateCables() {
 
         const d = `M ${x1} ${y1} L ${x1} ${y1_off} L ${X1} ${y1_off} L ${X1} ${Y_mid} L ${X2} ${Y_mid} L ${X2} ${y2_off} L ${x2} ${y2_off} L ${x2} ${y2}`;
         conn.pathElem.setAttribute('d', d);
+        
+        // Farbe anwenden
+        conn.pathElem.setAttribute('stroke', conn.color || 'black');
 
-        // Eckpunkte abspeichern für den T-Knoten-Check
+        // Namen aktualisieren
+        if (conn.textElem) {
+            conn.textElem.textContent = conn.name || '';
+            if (conn.name) {
+                conn.textElem.setAttribute('x', X1 + (X2 - X1) / 2);
+                conn.textElem.setAttribute('y', Y_mid - 8);
+                conn.textElem.setAttribute('fill', conn.color || 'black'); 
+            }
+        }
+
         conn.points = [
             {x: x1, y: y1}, {x: x1, y: y1_off}, {x: X1, y: y1_off},
             {x: X1, y: Y_mid}, {x: X2, y: Y_mid}, {x: X2, y: y2_off},
@@ -144,7 +191,7 @@ function updateCables() {
         }
     });
 
-    // --- NEU: HOCHPRÄZISE KNOTEN-LOGIK (V1.4) ---
+    // --- KNOTEN-LOGIK ---
     document.querySelectorAll('.junction-dot').forEach(el => el.remove());
 
     const allPorts = Array.from(document.querySelectorAll('.port')).map(p => {
@@ -195,7 +242,6 @@ function updateCables() {
 
         segments.forEach(seg => { addCandidate(seg.a.x, seg.a.y); addCandidate(seg.b.x, seg.b.y); });
 
-        // Schnittpunkte finden
         segments.forEach(seg1 => {
             segments.forEach(seg2 => {
                 const isHoriz1 = Math.abs(seg1.a.y - seg1.b.y) < 1;
@@ -210,7 +256,6 @@ function updateCables() {
             });
         });
 
-        // Abgangs-Richtungen zählen (Die magische Fehlerkorrektur!)
         candidatePoints.forEach(p => {
             let hasUp = false, hasDown = false, hasLeft = false, hasRight = false;
             const tol = 1;
@@ -235,7 +280,6 @@ function updateCables() {
                 }
             });
 
-            // Gibt es mindestens 3 Richtungen? (T-Stück oder Kreuzung)
             const dirCount = (hasUp ? 1 : 0) + (hasDown ? 1 : 0) + (hasLeft ? 1 : 0) + (hasRight ? 1 : 0);
 
             if (dirCount >= 3) {

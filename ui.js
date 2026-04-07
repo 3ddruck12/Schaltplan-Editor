@@ -1,6 +1,8 @@
-// www.kreativekiste.de
-// 06.04.2026
-// Version 2.6
+// www.kreativekiste.de // 07.04.2026 // Version 3.1
+
+// Globale Variable für die Zählweise ('din' = nach Position, 'continuous' = fortlaufend)
+window.numberingMode = 'din'; 
+window.currentWireConn = null; // Speichert das aktuell ausgewählte Kabel für das Menü
 
 document.getElementById('btn-clear').addEventListener('click', clearCanvas);
 
@@ -11,19 +13,29 @@ document.addEventListener('click', (e) => {
         e.target.parentElement.classList.toggle('open');
     }
     
-    // Kontextmenü ausblenden (außer man klickt direkt ins Menü oder startet einen Drag-Vorgang)
+    // Bauteil-Kontextmenü ausblenden
     if (!e.target.closest('#context-menu') && !e.target.closest('.edit-comp-btn')) {
         hideContextMenu();
     } else if (e.target.classList.contains('menu-item') || e.target.closest('.menu-item')) {
-        // Menü schließen, wenn ein Menüpunkt geklickt wurde
         hideContextMenu();
+    }
+
+    // Kabel-Kontextmenü ausblenden
+    if (!e.target.closest('#wire-context-menu')) {
+        hideWireContextMenu();
+    } else if (e.target.classList.contains('menu-item') || e.target.closest('.menu-item')) {
+        hideWireContextMenu();
     }
 });
 
 const contextMenu = document.getElementById('context-menu');
 contextMenu.style.display = 'none'; // Menü beim Start hart verstecken
 
+const wireContextMenu = document.getElementById('wire-context-menu');
+if (wireContextMenu) wireContextMenu.style.display = 'none';
+
 function showContextMenu(x, y) {
+    hideWireContextMenu(); // Sicherstellen, dass das Kabelmenü zu ist
     contextMenu.style.left = x + 'px';
     contextMenu.style.top = y + 'px';
     contextMenu.classList.remove('hidden');
@@ -51,6 +63,12 @@ function showContextMenu(x, y) {
         document.getElementById('menu-taster-latch-no').innerHTML = `🔒 ${prefix} Schließer rastend`;
         document.getElementById('menu-taster-latch-nc').innerHTML = `🔒 ${prefix} Öffner rastend`;
     }
+
+    // Beschriftung des Umschalt-Buttons je nach Modus anpassen
+    const toggleBtn = document.getElementById('menu-toggle-numbering');
+    if (toggleBtn) {
+        toggleBtn.innerHTML = window.numberingMode === 'din' ? '🔄 Zählweise: DIN (Position)' : '🔄 Zählweise: Fortlaufend';
+    }
 }
 
 function hideContextMenu() {
@@ -58,15 +76,95 @@ function hideContextMenu() {
     contextMenu.style.display = 'none'; 
 }
 
+// --- NEU: KABEL KONTEXTMENÜ STEUERUNG ---
+window.showWireContextMenu = function(x, y, conn) {
+    hideContextMenu(); // Bauteilmenü sicherheitshalber schließen
+    window.currentWireConn = conn;
+    if (wireContextMenu) {
+        wireContextMenu.style.left = x + 'px';
+        wireContextMenu.style.top = y + 'px';
+        wireContextMenu.classList.remove('hidden');
+        wireContextMenu.style.display = 'block';
+    }
+};
+
+function hideWireContextMenu() {
+    if (wireContextMenu) {
+        wireContextMenu.classList.add('hidden');
+        wireContextMenu.style.display = 'none';
+        // HIER WAR DER FEHLER: window.currentWireConn = null; wurde entfernt. 
+        // Sonst vergisst das Skript das Kabel, bevor der Klick ausgeführt wird!
+    }
+}
+
+// Event-Listener für das Kabel-Menü anlegen
+if (document.getElementById('wire-menu-toggle-points')) {
+    document.getElementById('wire-menu-toggle-points').addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        hideWireContextMenu();
+        if (window.currentWireConn) {
+            window.currentWireConn.showHandles = !window.currentWireConn.showHandles;
+            if (typeof updateCables === 'function') updateCables();
+            addHistory(window.currentWireConn.showHandles ? 'Kabel-Punkte eingeblendet' : 'Kabel-Punkte ausgeblendet');
+        }
+    });
+
+    document.getElementById('wire-menu-rename').addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        hideWireContextMenu();
+        if (window.currentWireConn) {
+            const newName = prompt('Kabelname eingeben:', window.currentWireConn.name || '');
+            if (newName !== null) {
+                window.currentWireConn.name = newName;
+                if (typeof updateCables === 'function') updateCables();
+                addHistory('Kabelname geändert');
+            }
+        }
+    });
+
+    ['black', 'blue', 'gray', 'brown'].forEach(color => {
+        const colorBtn = document.getElementById(`wire-menu-color-${color}`);
+        if (colorBtn) {
+            colorBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                hideWireContextMenu();
+                if (window.currentWireConn) {
+                    window.currentWireConn.color = color;
+                    if (typeof updateCables === 'function') updateCables();
+                    addHistory(`Kabelfarbe geändert auf ${color}`);
+                }
+            });
+        }
+    });
+
+    document.getElementById('wire-menu-delete').addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        hideWireContextMenu();
+        if (window.currentWireConn) {
+            window.currentWireConn.pathElem.remove();
+            if (window.currentWireConn.h1) window.currentWireConn.h1.remove();
+            if (window.currentWireConn.h2) window.currentWireConn.h2.remove();
+            if (window.currentWireConn.h3) window.currentWireConn.h3.remove();
+            if (window.currentWireConn.textElem) window.currentWireConn.textElem.remove();
+            
+            // Verbindung aus dem Array löschen
+            connections = connections.filter(c => c !== window.currentWireConn);
+            if (typeof updateCables === 'function') updateCables();
+            addHistory('Kabel gelöscht');
+        }
+    });
+}
+
+
 document.getElementById('menu-edit').addEventListener('click', (e) => {
     e.stopPropagation(); hideContextMenu();
     if (contextMenuTarget && typeof openEditorForInstance === 'function') openEditorForInstance(contextMenuTarget);
 });
 
-// --- Speichern und Laden ---
+// --- Speichern und Laden (inklusive numberingMode) ---
 document.getElementById('btn-save-project').onclick = () => {
     if(typeof saveCurrentPageState === 'function') saveCurrentPageState();
-    const data = { pages: pages, coilCounter: coilCounter };
+    const data = { pages: pages, coilCounter: coilCounter, numberingMode: window.numberingMode };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
     const downloadAnchor = document.createElement('a'); downloadAnchor.setAttribute("href", dataStr); downloadAnchor.setAttribute("download", "schaltplan_projekt.json"); downloadAnchor.click();
     addHistory('Projekt gespeichert');
@@ -79,6 +177,7 @@ fileInput.onchange = (e) => {
     const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
     reader.onload = (event) => {
         const data = JSON.parse(event.target.result); pages = data.pages; coilCounter = data.coilCounter || 1; currentPageId = pages[0].id;
+        window.numberingMode = data.numberingMode || 'din';
         if(typeof loadPageState === 'function') loadPageState(currentPageId); if(typeof renderTabs === 'function') renderTabs();
         addHistory('Projekt geladen');
     };
@@ -88,7 +187,8 @@ fileInput.onchange = (e) => {
 function clearCanvas() {
     canvas.querySelectorAll('.dropped-component').forEach(c => c.remove());
     wiringLayer.innerHTML = ''; connections.length = 0; startPort = null; coilCounter = 1; 
-    isAssignMode = false; window.crossPageAssign.active = false; canvas.classList.remove('assign-mode'); selectedParent = null; hideContextMenu();
+    isAssignMode = false; window.crossPageAssign.active = false; canvas.classList.remove('assign-mode'); selectedParent = null; hideContextMenu(); hideWireContextMenu();
+    window.currentWireConn = null;
     if(typeof pages !== 'undefined') { pages = [{ id: 1, name: "Seite 1", components: [], connections: [] }]; currentPageId = 1; if(typeof renderTabs === 'function') renderTabs(); }
     addHistory('Arbeitsfläche komplett geleert');
 }
@@ -100,6 +200,27 @@ document.getElementById('menu-assign').addEventListener('click', (e) => {
     isAssignMode = true; selectedParent = contextMenuTarget; canvas.classList.add('assign-mode');
     document.querySelectorAll('.dropped-component').forEach(c => c.classList.remove('parent-selected'));
     selectedParent.classList.add('parent-selected'); addHistory('Zuordnungsmodus aktiv');
+});
+
+// NEUER SCHALTER FÜR DIE ZÄHLWEISE
+document.getElementById('menu-toggle-numbering').addEventListener('click', (e) => {
+    e.stopPropagation(); hideContextMenu();
+    
+    window.numberingMode = window.numberingMode === 'din' ? 'continuous' : 'din';
+    addHistory('Zählweise geändert auf: ' + (window.numberingMode === 'din' ? 'DIN (Position)' : 'Fortlaufend'));
+    
+    if (typeof pages !== 'undefined') {
+        pages.forEach(p => {
+            p.components.forEach(c => {
+                if (c.type === 'schuetz') {
+                    if (typeof recalculateTerminals === 'function') recalculateTerminals(c.id);
+                }
+            });
+        });
+    }
+    canvas.querySelectorAll('.dropped-component[data-type="schuetz"]').forEach(coil => {
+        if (typeof recalculateTerminals === 'function') recalculateTerminals(coil.dataset.id);
+    });
 });
 
 document.addEventListener('keydown', (e) => {
@@ -157,7 +278,8 @@ document.getElementById('menu-delete').addEventListener('click', (e) => {
     const id = contextMenuTarget.dataset.id;
     connections = connections.filter(conn => {
         if (conn.port1.closest('.dropped-component') === contextMenuTarget || conn.port2.closest('.dropped-component') === contextMenuTarget) {
-            conn.pathElem.remove(); if(conn.h1) conn.h1.remove(); if(conn.h2) conn.h2.remove(); if(conn.h3) conn.h3.remove(); return false;
+            conn.pathElem.remove(); if(conn.h1) conn.h1.remove(); if(conn.h2) conn.h2.remove(); if(conn.h3) conn.h3.remove(); 
+            if (conn.textElem) conn.textElem.remove(); return false;
         } return true;
     });
     if (contextMenuTarget.dataset.type === 'schuetz') { canvas.querySelectorAll(`.dropped-component[data-parent-id="${id}"]`).forEach(c => { if(typeof unassignContact === 'function') unassignContact(c); }); } 
@@ -272,9 +394,7 @@ document.getElementById('btn-zoom-out').addEventListener('click', () => {
 });
 
 function applyZoom() {
-    // Rundung, damit wir saubere Prozentzahlen haben
     zoomLevelText.innerText = Math.round(window.currentZoom * 100) + '%';
-    // Der CSS zoom Befehl skaliert die gesamte Zeichenfläche nativ!
     canvasArea.style.zoom = window.currentZoom;
     addHistory('Zoom auf ' + zoomLevelText.innerText);
 }

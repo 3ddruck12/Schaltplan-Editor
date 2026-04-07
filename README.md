@@ -1,58 +1,55 @@
-# Interaktiver Schaltplan-Editor – Version 2.0 🚀
-// [www.kreativekiste.de](https://www.kreativekiste.de) // Stand: 06.04.2026
+// www.kreativekiste.de // 07.04.2026 // Version 3.3
 
-Willkommen zur **Version 2.0** des browserbasierten Schaltplan-Editors! Dieses Tool wurde entwickelt, um elektrotechnische Dokumentationen so einfach und intuitiv wie möglich zu machen. Kein schwerfälliges CAD-Programm, keine Installation – einfach im Browser öffnen und loslegen.
+# Interaktiver Schaltplan-Editor – Version 3.3 🚀
 
-Die Version 2.0 markiert den Übergang von einer reinen Platzierungs-Software hin zu einem **echten Konstruktions-Werkzeug**.
+Willkommen zur **Version 3.3**! Dieses Update macht deinen Schaltplan-Editor fit für den professionellen Einsatz. Das Tool verwandelt sich von einer einfachen Zeichenfläche in ein echtes Konstruktions-Werkzeug mit normgerechtem Layout und smarten Automatisierungen.
+
+Mit der Version 3.3 liegt der Fokus auf der **Arbeitsumgebung** und dem **Datenaustausch**. Du arbeitest jetzt auf einem echten "Blatt Papier" mit allen notwendigen Koordinaten und kannst deine Ergebnisse sofort teilen.
 
 ---
 
-## ✨ Was ist neu in Version 2.0?
+## ✨ Was ist neu in Version 3.3?
 
-Das Herzstück des Updates ist der komplett überarbeitete **CAD-Bauteil-Editor**. Du bist nicht mehr auf vorgegebene Symbole angewiesen, sondern kannst deine eigenen Bauteile direkt im Tool erschaffen.
+In diesem Versionssprung stecken die bisher größten Verbesserungen für deinen Workflow:
 
-* **Vergrößertes Arbeitsfeld:** Der Editor bietet nun Platz auf 120x160 Einheiten – genug für komplexe Motoren, Schütze oder Sonderbauteile.
-* **Echter CAD-Modus:** Zeichne Linien, Rechtecke, Kreise und Texte.
-* **Intelligentes Handling:** Bauteile können im Editor frei verschoben, in der Größe angepasst und über rote "Anfasser" (Handles) manipuliert werden.
-* **Multi-Page-Support:** Erstelle Projekte über mehrere Seiten hinweg und verwalte diese bequem über Tabs.
+* **Professioneller A4-Zeichenrahmen:** Deine Arbeitsfläche entspricht nun exakt einem A4-Blatt im Querformat. Der Rahmen enthält normgerechte Koordinaten (Spalten 1-17 und Zeilen A-H), damit jedes Bauteil im Plan präzise referenziert werden kann.
+* **Interaktives Schriftfeld:** Das Schriftfeld am unteren Rand ist nicht mehr statisch. Per **Doppelklick** kannst du den Autor, das Datum, den Projektnamen und den Titel direkt im Rahmen bearbeiten. Die Seitenzahlen werden automatisch berechnet.
+* **Bild-Export (PNG):** Du kannst deinen fertigen Schaltplan jetzt mit nur einem Klick als hochauflösendes Bild exportieren. Perfekt zum Versenden oder zum Einfügen in Dokumentationen.
+* **Intelligente Farbvererbung:** Wenn du eine neue Leitung an eine bestehende anschließt, erkennt das System die Kabelfarbe und übernimmt diese automatisch für das neue Kabel.
+* **Verbesserte UI & Performance:** Das Layout wurde für die A4-Arbeitsfläche optimiert. Die Z-Ebenen wurden so sortiert, dass Bauteile, Rahmen und Leitungen sich nicht mehr gegenseitig verdecken.
 
 ---
 
 ## 🛠 Funktionsumfang
 
-* **Drag & Drop System:** Ziehe Bauteile aus der Bibliothek direkt auf das Feld.
-* **Smart Wiring:** Die Leitungen ziehen sich rechtwinklig (orthogonal) und lassen sich über eine **3-Punkt-Steuerung** individuell im Verlauf anpassen.
-* **Bauteil-Bibliothek:** Enthalten sind bereits Schütze, Motoren, Taster, Meldeleuchten und mehr.
-* **Interaktive Verknüpfung:** Verknüpfe Schützspulen seitenübergreifend mit ihren Kontakten.
-* **Projekt-Verwaltung:** Speichere dein gesamtes Projekt als `.json` Datei lokal ab und lade es jederzeit wieder hoch.
-* **Kontext-Menü:** Rechtsklick auf Bauteile erlaubt das Drehen, Umbenennen oder Ändern von Attributen (z. B. Anzahl der Klemmen).
+* **Smarte Verkabelung:** Rechtwinklige Leitungsführung mit 3-Punkt-Steuerung und automatischer Knotenpunkt-Erkennung bei Kreuzungen.
+* **Kontext-Menü für Leitungen:** Ändere Kabelfarben, benenne Adern um oder blende die Steuerpunkte ein und aus.
+* **Multi-Page-System:** Verwalte komplexe Projekte über beliebig viele Seiten hinweg.
+* **CAD-Bauteil-Editor:** Erschaffe eigene Symbole auf einem 120x160 Einheiten großen Raster.
+* **Projekt-Verwaltung:** Speichere dein gesamtes Projekt lokal als `.json` und lade es jederzeit wieder.
 
 ---
 
-## 🚀 Roadmap – Was noch kommt
+## 🚀 Roadmap – Die nächsten Schritte
 
-Das Projekt wird stetig weiterentwickelt. Hier ist die Planung für die kommenden Versionen:
+Wir machen morgen direkt weiter! Hier ist der Plan für die kommenden Versionen:
 
-### **Priorität 1 (Nächste Schritte)**
-* **Exportfunktion:** Schaltpläne direkt als PDF oder Bilddatei exportieren.
-* **Schutzorgane:** Implementierung von Sicherungen, Leitungsschutzschaltern und FI-Schutzschaltern (RCD).
-* **Potenzialverwaltung:** Definition von L1, L2, L3, N und PE.
-* **Ader-Management:** Zuweisung von Leiterfarben und detaillierte Bezeichnungen für jede Leitung.
+### **Priorität 1: Schutzorgane & Export-Pro**
+* **Bauteil-Ordner Schutzorgane:** Implementierung von Sicherungen, Leitungsschutzschaltern (LSS), FI-Schutzschaltern (RCD) und Motorschutzschaltern (MSS) – inkl. 1- bis 3-poliger Umschaltung.
+* **PDF-Export:** Direkter Export als Dokument für den Druck.
+* **Erweiterte Export-Optionen:** Export einzelner Seiten, des gesamten Projekts in einer Datei und Einstellung der Bildqualität.
 
-### **Priorität 2 (Komfort & Ordnung)**
-* **Inhaltsverzeichnis:** Automatische Generierung einer Seitenübersicht.
-* **BMK (Betriebsmittelkennzeichnung):** Automatische Vergabe von Kennzeichen nach Norm (z. B. -K1, -Q1, -F1).
-* **Undo/Redo:** Eine Rückgängig-Funktion für alle Aktionen auf dem Plan.
-
----
-
-## ⚙️ Installation & Start
-
-Du musst nichts installieren! 
-1. Lade dir das Repository als ZIP herunter oder klone es per Git.
-2. Öffne die `index.html` in einem modernen Browser (Chrome, Firefox, Edge).
-3. **Wichtig:** Da es sich um eine Testversion handelt, freuen wir uns über Feedback zu Bugs oder Verbesserungsvorschlägen!
+### **Priorität 2: Ordnung & Komfort**
+* **Seitenverwaltung:** Funktionen zum Sortieren der Seiten und ein automatisch generiertes Inhaltsverzeichnis.
+* **Vollbild-Modus:** Maximierung der Arbeitsfläche durch Ausblenden der Seitenleisten.
+* **BMK-Automatik:** Intelligente Vergabe von Betriebsmittelkennzeichen nach aktueller Norm.
 
 ---
 
-**Entwickelt von [Kreative Kiste](https://www.kreativekiste.de)** *Elektrotechnik einfach visualisiert.*
+## ⚙️ Start & Nutzung
+
+Einfach die `index.html` im Browser deiner Wahl öffnen. Da das Tool komplett lokal läuft, werden keine Daten auf fremde Server geladen – dein Projekt gehört dir!
+
+---
+
+**Entwickelt von [Kreative Kiste](https://www.kreativekiste.de)**
