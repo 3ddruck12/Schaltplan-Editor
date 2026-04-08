@@ -1,0 +1,27 @@
+{
+  "productName": "schaltplan-editor",
+  "version": "1.0.0",
+  "identifier": "com.kreativekiste.schaltplan-editor",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Schaltplan Editor",
+        "width": 1000,
+        "height": 800
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all"
+  }
+}
