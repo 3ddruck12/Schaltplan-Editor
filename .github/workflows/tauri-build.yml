@@ -3,12 +3,15 @@ name: Build Tauri App
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
+    permissions:
+      contents: write
     name: Build on ${{ matrix.platform }}
     runs-on: ${{ matrix.platform }}
     strategy:
@@ -48,10 +51,13 @@ jobs:
         run: npm run build
 
       - name: Build Tauri App
+        id: tauri-build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: "Schaltplan Editor ${{ github.ref_name }}"
           releaseId: ''
           releaseDraft: true
           prerelease: false
@@ -70,4 +76,14 @@ jobs:
         with:
           name: InnoSetup-Installer
           path: src-tauri/dist_setup/SchaltplanEditor_Setup.exe
+
+      - name: Upload Inno Setup to GitHub Release (Windows only)
+        if: matrix.platform == 'windows-latest' && github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: src-tauri/dist_setup/SchaltplanEditor_Setup.exe
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
