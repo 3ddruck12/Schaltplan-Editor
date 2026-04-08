@@ -10,6 +10,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     name: Build on ${{ matrix.platform }}
     runs-on: ${{ matrix.platform }}
     strategy:
@@ -49,102 +51,28 @@ jobs:
       - name: Run Build prep script
         run: npm run build
 
-      - name: Build Tauri App
-        run: npm run tauri build
-
-      - name: Find and prepare binary (Windows only)
-        if: matrix.platform == 'windows-latest'
-        shell: pwsh
-        run: |
-          Write-Host "=== All .exe files found ==="
-          Get-ChildItem -Path . -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.cargo*" } | Select-Object FullName
-
-          $candidates = @(
-            "src-tauri\target\release\schaltplan-editor.exe",
-            "src-tauri\target\x86_64-pc-windows-msvc\release\schaltplan-editor.exe"
-          )
-
-          $found = $null
-          foreach ($path in $candidates) {
-            if (Test-Path $path) {
-              $found = $path
-              Write-Host "Found binary at: $path"
-              break
-            }
-          }
-
-          if ($found) {
-            $destDir = "src-tauri\target\release"
-            if (!(Test-Path $destDir)) { New-Item -ItemType Directory $destDir -Force }
-            if ($found -ne "$destDir\schaltplan-editor.exe") {
-              Copy-Item $found "$destDir\schaltplan-editor.exe" -Force
-              Write-Host "Copied to $destDir"
-            } else {
-              Write-Host "Binary already at correct location."
-            }
-          } else {
-            Write-Error "Could not find schaltplan-editor.exe"
-            exit 1
-          }
+      - name: Build and Release Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          releaseName: "Schaltplan Editor ${{ github.ref_name }}"
+          releaseDraft: true
+          prerelease: false
+          includeRelease: true
 
       - name: Create Inno Setup Installer (Windows only)
         if: matrix.platform == 'windows-latest'
         run: |
-          mkdir src-tauri\dist_setup
-          iscc src-tauri\innosetup.iss
+          mkdir dist_setup
+          iscc src-tauri/innosetup.iss
 
-      - name: Collect and Upload Binaries (Ubuntu)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          mkdir -p dist-release
-          echo "=== Searching for Linux binaries ==="
-          find src-tauri/target -name "*.deb" -exec cp {} dist-release/ \;
-          find src-tauri/target -name "*.AppImage" -exec cp {} dist-release/ \;
-          ls -R dist-release/
-
-      - name: Collect and Upload Binaries (Windows)
-        if: matrix.platform == 'windows-latest'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist-release
-          Write-Host "=== Searching for Windows binaries ==="
-          Get-ChildItem -Path src-tauri/target -Filter "*.msi" -Recurse | Copy-Item -Destination dist-release/
-          Get-ChildItem -Path dist_setup -Filter "*.exe" -Recurse | Copy-Item -Destination dist-release/
-          Get-ChildItem -Path dist-release
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries-${{ matrix.platform }}
-          path: dist-release/*
-
-  publish:
-    name: Create Release
-    needs: build
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: final-binaries
-          pattern: binaries-*
-          merge-multiple: true
-
-      - name: Create GitHub Release
+      - name: Attach Inno Setup to Release (Windows only)
+        if: matrix.platform == 'windows-latest' && github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: final-binaries/**/*
+          files: dist_setup/*.exe
           tag_name: ${{ github.ref_name }}
-          name: "Schaltplan Editor ${{ github.ref_name }}"
-          draft: true
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
