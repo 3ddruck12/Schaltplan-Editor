@@ -24,6 +24,7 @@
     "active": true,
     "targets": "all",
     "licenseFile": "../LICENSE.md",
+    "category": "Development",
     "icon": [
       "icons/32x32.png",
       "icons/64x64.png",
@@ -35,8 +36,6 @@
     ],
     "linux": {
       "deb": {
-        "category": "Development",
-        "section": "utils"
       }
     }
   }
