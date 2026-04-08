@@ -93,6 +93,21 @@ jobs:
           mkdir src-tauri\dist_setup
           iscc src-tauri\innosetup.iss
 
+      - name: Debug - List all build artifacts (Ubuntu)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          echo "=== Linux Artifacts ==="
+          find src-tauri/target -name "*.deb" || true
+          find src-tauri/target -name "*.AppImage" || true
+
+      - name: Debug - List all build artifacts (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "=== Windows Artifacts ==="
+          Get-ChildItem -Path . -Filter "*.msi" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
+          Get-ChildItem -Path . -Filter "*.exe" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -notlike "*\.cargo*" } | Select-Object FullName
+
       - name: Upload Binaries
         uses: actions/upload-artifact@v4
         with:
