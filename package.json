@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "build": "node build.mjs",
+    "tauri": "tauri",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
