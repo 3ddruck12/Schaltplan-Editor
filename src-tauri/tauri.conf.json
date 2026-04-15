@@ -1,6 +1,6 @@
 {
   "productName": "schaltplan-editor",
-  "version": "3.4.1",
+  "version": "1.0.0",
   "identifier": "com.kreativekiste.schaltplan-editor",
   "build": {
     "beforeDevCommand": "",
