@@ -84,7 +84,8 @@ canvas.addEventListener('drop', (e) => {
     newComp.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         if (typeof isAssignMode !== 'undefined' && isAssignMode || (window.crossPageAssign && window.crossPageAssign.active)) return;
-        contextMenuTarget = newComp; 
+        window.contextMenuTarget = newComp;  // FIX: window. prefix damit ui.js es lesen kann
+        contextMenuTarget = newComp;          // Kompatibilität mit altem Code
         if (typeof showContextMenu === 'function') showContextMenu(e.clientX, e.clientY);
     });
 
@@ -122,7 +123,7 @@ function handleComponentClick(e) {
     if (typeof hasMoved !== 'undefined' && hasMoved) return; 
     if (typeof isAssignMode !== 'undefined' && isAssignMode && typeof selectedParent !== 'undefined' && selectedParent) {
         e.stopPropagation(); const clickedComp = e.currentTarget;
-        if (clickedComp.dataset.type === 'schliesser' || clickedComp.dataset.type === 'oeffner' || clickedComp.dataset.type === 'hauptkontakt') {
+        if (clickedComp.dataset.type === 'schliesser' || clickedComp.dataset.type === 'oeffner' || clickedComp.dataset.type === 'hauptkontakt' || clickedComp.dataset.type === 'motor') {
             clickedComp.setAttribute('data-parent-id', selectedParent.dataset.id);
             updateLabel(clickedComp, selectedParent.dataset.label, 'pos-left');
             recalculateTerminals(selectedParent.dataset.id);
@@ -436,8 +437,8 @@ setTimeout(() => {
         window.showContextMenu = function(x, y) {
             originalShowContextMenu(x, y);
             
-            if (typeof contextMenuTarget !== 'undefined' && contextMenuTarget) {
-                const type = contextMenuTarget.dataset.type;
+            if (window.contextMenuTarget) {
+                const type = window.contextMenuTarget.dataset.type;
                 const hubbelBtn = document.getElementById('menu-power-hubbel');
                 
                 if (type === 'schmelzsicherung' || type === 'leitungsschutzschalter' || type === 'fi_schutzschalter') {

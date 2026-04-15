@@ -20,7 +20,8 @@ let selectedParent = null;
 window.crossPageAssign = { active: false, sourceId: null, sourcePage: null };
 
 let coilCounter = 1; 
-let contextMenuTarget = null; 
+let contextMenuTarget = null;    // lokale Referenz (Kompatibilität)
+window.contextMenuTarget = null; // FIX: window-Property damit ui.js es lesen kann
 
 let pages = [ { id: 1, name: "Seite 1", components: [], connections: [] } ];
 let currentPageId = 1;

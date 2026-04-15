@@ -91,6 +91,7 @@ function switchPage(id) {
     } else {
         if (area4) area4.classList.remove('hidden');
         loadPageState(id);
+        if (typeof drawFrame === 'function') drawFrame(); // FIX: Seitenzahl im Rahmen aktualisieren
     }
 
     renderTabs();
@@ -156,7 +157,9 @@ function saveCurrentPageState() {
             port1Index: Array.from(c.port1.closest('.dropped-component').querySelectorAll('.port')).indexOf(c.port1),
             port2Id: c.port2.closest('.dropped-component').dataset.id,
             port2Index: Array.from(c.port2.closest('.dropped-component').querySelectorAll('.port')).indexOf(c.port2),
-            customX1: c.customX1, customY: c.customY, customX2: c.customX2
+            customX1: c.customX1, customY: c.customY, customX2: c.customX2,
+            color: c.color,   // FIX: Kabelfarbe sichern
+            name: c.name      // FIX: Kabelname sichern
         }));
         currentPage.connections = conns;
     }
@@ -213,7 +216,11 @@ function loadPageState(id) {
                 const port1 = comp1.querySelectorAll('.port')[conn.port1Index];
                 const port2 = comp2.querySelectorAll('.port')[conn.port2Index];
                 if(typeof window.addConnection === 'function') {
-                    window.addConnection(port1, port2, { customX1: conn.customX1, customY: conn.customY, customX2: conn.customX2 });
+                    window.addConnection(port1, port2, { 
+                        customX1: conn.customX1, customY: conn.customY, customX2: conn.customX2,
+                        color: conn.color,   // FIX: Farbe wiederherstellen
+                        name: conn.name      // FIX: Name wiederherstellen
+                    });
                 }
             }
         }

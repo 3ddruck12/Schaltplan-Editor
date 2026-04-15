@@ -64,7 +64,12 @@ function showContextMenu(x, y) {
     if(elPower) elPower.style.display = (type === 'hauptkontakt') ? 'block' : 'none';
     
     const elAssign = document.querySelector('.assign-only');
-    if(elAssign) elAssign.style.display = (type === 'schuetz' || type === 'schliesser' || type === 'oeffner') ? 'block' : 'none';
+    if(elAssign) elAssign.style.display = (type === 'schuetz' || type === 'schliesser' || type === 'oeffner' || type === 'motor') ? 'block' : 'none';
+    // Für Motor: "Zuordnen"-Button verstecken (Motor wird FROM einem Schütz zugeordnet, nicht selbst)
+    const menuAssignItem = document.getElementById('menu-assign');
+    if (menuAssignItem) menuAssignItem.style.display = (type === 'motor') ? 'none' : 'block';
+    const menuToggleNum = document.getElementById('menu-toggle-numbering');
+    if (menuToggleNum) menuToggleNum.style.display = (type === 'motor') ? 'none' : 'block';
     
     const elMotor = document.querySelector('.motor-only');
     if(elMotor) elMotor.style.display = (type === 'motor') ? 'block' : 'none';

@@ -6,8 +6,9 @@ let draggedWireTarget = null;
 document.addEventListener('mousemove', (e) => {
     if (isDraggingWire && draggedWireTarget) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const zoom = window.currentZoom || 1.0;
+        const mouseX = (e.clientX - rect.left) / zoom;
+        const mouseY = (e.clientY - rect.top) / zoom;
 
         if (draggedWireTarget.type === 'X1') draggedWireTarget.conn.customX1 = mouseX;
         if (draggedWireTarget.type === 'Y')  draggedWireTarget.conn.customY = mouseY;
@@ -99,9 +100,10 @@ function handlePortClick(e) {
     const port = e.target;
     const rect = canvas.getBoundingClientRect();
     const portRect = port.getBoundingClientRect();
+    const zoom = window.currentZoom || 1.0;
     
-    const x = portRect.left - rect.left + (portRect.width / 2);
-    const y = portRect.top - rect.top + (portRect.height / 2);
+    const x = (portRect.left - rect.left + portRect.width / 2) / zoom;
+    const y = (portRect.top - rect.top + portRect.height / 2) / zoom;
 
     if (!startPort) {
         startPort = { x, y, element: port };
@@ -119,6 +121,7 @@ function handlePortClick(e) {
 
 function updateCables() {
     const canvasRect = canvas.getBoundingClientRect();
+    const zoom = window.currentZoom || 1.0;
     
     connections = connections.filter(conn => {
         if (!document.body.contains(conn.port1) || !document.body.contains(conn.port2)) {
@@ -134,10 +137,10 @@ function updateCables() {
         const rect1 = conn.port1.getBoundingClientRect();
         const rect2 = conn.port2.getBoundingClientRect();
         
-        const x1 = rect1.left - canvasRect.left + (rect1.width / 2);
-        const y1 = rect1.top - canvasRect.top + (rect1.height / 2);
-        const x2 = rect2.left - canvasRect.left + (rect2.width / 2);
-        const y2 = rect2.top - canvasRect.top + (rect2.height / 2);
+        const x1 = (rect1.left - canvasRect.left + rect1.width / 2) / zoom;
+        const y1 = (rect1.top - canvasRect.top + rect1.height / 2) / zoom;
+        const x2 = (rect2.left - canvasRect.left + rect2.width / 2) / zoom;
+        const y2 = (rect2.top - canvasRect.top + rect2.height / 2) / zoom;
 
         const cy1 = parseFloat(conn.port1.getAttribute('cy') || '50');
         const cy2 = parseFloat(conn.port2.getAttribute('cy') || '50');
@@ -196,7 +199,10 @@ function updateCables() {
 
     const allPorts = Array.from(document.querySelectorAll('.port')).map(p => {
         const r = p.getBoundingClientRect();
-        return { x: r.left - canvasRect.left + r.width/2, y: r.top - canvasRect.top + r.height/2 };
+        return { 
+            x: (r.left - canvasRect.left + r.width / 2) / zoom, 
+            y: (r.top - canvasRect.top + r.height / 2) / zoom 
+        };
     });
 
     function sharePort(c1, c2) {
