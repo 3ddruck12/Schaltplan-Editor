@@ -1,4 +1,4 @@
-// www.kreativekiste.de // 09.04.2026 // Version 1.0
+// www.kreativekiste.de // 09.04.2026 // Version 1.0.0
 
 # ⚡ Elektro-Schaltplan Web-Tool
 
